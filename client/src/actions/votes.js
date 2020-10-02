@@ -1,4 +1,3 @@
-import history from '../history';
 import { getCards } from './cards';
 
 export function createVote(cardId) {

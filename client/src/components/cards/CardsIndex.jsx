@@ -2,20 +2,22 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
+import { descend, prop, ascend, sortWith } from 'ramda'
+
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
-import CardMedia from '@material-ui/core/CardMedia';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
-import Icon from '@material-ui/core/Icon';
 import Link from '@material-ui/core/Link';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
+import SortIcon from '@material-ui/icons/Sort';
+import IconButton from '@material-ui/core/IconButton'
 
 import Form from './Form';
 import * as cardsActions from '../../actions/cards';
@@ -26,7 +28,7 @@ const styles = theme => ({
     position: 'relative',
   },
   icon: {
-    marginRight: theme.spacing.unit * 2,
+    marginRight: theme.spacing(2),
   },
   heroUnit: {
     backgroundColor: theme.palette.background.paper,
@@ -34,16 +36,16 @@ const styles = theme => ({
   heroContent: {
     maxWidth: 600,
     margin: '0 auto',
-    padding: `${theme.spacing.unit * 8}px 0 ${theme.spacing.unit * 6}px`,
+    padding: `${theme.spacing(8)}px 0 ${theme.spacing(6)}px`,
   },
   heroButtons: {
-    marginTop: theme.spacing.unit * 4,
+    marginTop: theme.spacing(4),
   },
   deleteButton: {
     display: 'none',
   },
   cardGrid: {
-    padding: `${theme.spacing.unit * 8}px 0`,
+    padding: `${theme.spacing(8)}px 0`,
   },
   card: {
     height: '100%',
@@ -55,38 +57,50 @@ const styles = theme => ({
   },
   layout: {
     width: 'auto',
-    marginLeft: theme.spacing.unit * 3,
-    marginRight: theme.spacing.unit * 3,
-    [theme.breakpoints.up(1100 + theme.spacing.unit * 3 * 2)]: {
+    marginLeft: theme.spacing(3),
+    marginRight: theme.spacing(3),
+    [theme.breakpoints.up(1100 + theme.spacing(6))]: {
       width: 1100,
       marginLeft: 'auto',
       marginRight: 'auto',
     },
   },
+  cardHeader: {
+    display: 'flex',
+    flexDirection: 'row-reverse',
+    justifyContent: 'right',
+    alignItems: 'center'
+  },
   footer: {
     backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing.unit * 6,
+    padding: theme.spacing(6),
   },
 })
+
+const byVotesDescending = descend(prop('votes'))
+const byCreatedDate = ascend(prop('created_at'))
 
 class CardsIndex extends Component {
   constructor(props) {
     super(props)
     this.vote = this.vote.bind(this)
     this.delete = this.delete.bind(this)
+    this.submit = this.submit.bind(this)
+    this.state = { sort: 'created_at' }
   }
 
   componentDidMount() {
-    console.log(this)
     this.props.actions.cardsActions.getCards();
   }
 
-  submit = values => {
-    this.props.actions.cardsActions.createCard(values.card);
+  submit(values) {
+    // this.props.actions.cardsActions.createCard(values.card);
+    this.props.dispatch({ type: 'SERVER_ACTION/NEW_TOPIC', channel: 'MainChannel', payload: { title: values.card } });
   }
 
   vote(cardId) {
-    this.props.actions.votesActions.createVote(cardId);
+    // this.props.actions.votesActions.createVote(cardId);
+    this.props.dispatch({ type: 'SERVER_ACTION/VOTE', channel: 'MainChannel', payload: { card_id: cardId } });
   }
 
   delete(cardId) {
@@ -95,6 +109,12 @@ class CardsIndex extends Component {
 
   render() {
     const { classes } = this.props;
+    const sortWithList = []
+    if(this.state.sort === 'votes') {
+      sortWithList.push(byVotesDescending)
+    }
+    sortWithList.push(byCreatedDate)
+    const cards = sortWith(sortWithList, this.props.cards)
     return (
       <React.Fragment>
         <CssBaseline />
@@ -102,7 +122,7 @@ class CardsIndex extends Component {
           <Toolbar>
             <Link variant="h5" color="inherit" href="https://astoria.app" noWrap>
               astoria.app
-            </Link>
+            </Link>            
           </Toolbar>
         </AppBar>
         <main>
@@ -116,7 +136,7 @@ class CardsIndex extends Component {
                 Add &amp; vote on the topics you want to talk about at the next meetup on <b>Wednesday, January 29th</b>.
               </Typography>
               <div className={classes.heroButtons}>
-                <Grid container spacing={16} justify="center">
+                <Grid container spacing={2} justify="center">
                   <Grid item>
                     <Form onSubmit={this.submit} />
                   </Grid>
@@ -125,10 +145,18 @@ class CardsIndex extends Component {
             </div>
           </div>
           <div className={classNames(classes.layout, classes.cardGrid)}>
-            {/* End hero unit */}
-            <Grid container spacing={40}>
-              {this.props.cards.map(card => (
-                <Grid item key={card} sm={6} md={4} lg={3}>
+            <div className={classes.cardHeader}>
+              <div>
+                <IconButton onClick={() => {this.setState({sort: this.state.sort === 'created_at' ? 'votes' : 'created_at'})}}>
+                  {this.state.sort === 'created_at' ? <div>Created Date</div> : <div>Votes</div>}
+                  &nbsp;
+                  <SortIcon fontSize="large" color="primary" />
+                </IconButton>
+              </div>
+            </div>
+            <Grid container spacing={5}>
+              {cards.map(card => (
+                <Grid item key={card.id} sm={6} md={4} lg={3}>
                   <Card className={classes.card}>
                     <CardContent className={classes.cardContent}>
                       <Typography gutterBottom variant="h5" component="h3">
@@ -174,9 +202,9 @@ function mapDispatchToProps(dispatch) {
   return {
     actions: {
       cardsActions: bindActionCreators(cardsActions, dispatch),
-      votesActions: bindActionCreators(votesActions, dispatch),
-
-    }
+      votesActions: bindActionCreators(votesActions, dispatch)
+    },
+    dispatch
   }
 }
 

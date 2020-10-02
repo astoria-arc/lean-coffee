@@ -3,7 +3,6 @@ import {
     RECEIVE_CARDS,
     DELETE_CARD
 } from '../constants/index';
-import { push } from 'react-router-redux';
 
 export function getCards() {
    return (dispatch, getState) => {

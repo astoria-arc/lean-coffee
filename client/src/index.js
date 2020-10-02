@@ -1,11 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import routes from './routes';
 import { Provider } from 'react-redux';
-import { Route, Switch, Redirect } from 'react-router'; // react-router v4
+import { Switch } from 'react-router'; // react-router v4
 import { ConnectedRouter } from 'connected-react-router';
-import createHistory from 'history/createBrowserHistory'
-import { syncHistoryWithStore } from 'react-router-redux';
 import configureStore from './configureStore';
 import App from './App';
 import history from './history';

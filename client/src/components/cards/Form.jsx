@@ -1,6 +1,7 @@
 import React from 'react';
 import { Field, reduxForm } from 'redux-form';
 import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button'
 
 const renderTextField = ({
   input,
@@ -9,9 +10,9 @@ const renderTextField = ({
   ...custom
 }) => (
   <TextField
-    hintText={label}
-    floatingLabelText={label}
-    errorText={touched && error}
+    label={label}
+    error={touched && !!error}
+    helperText={touched && error}
     {...input}
     {...custom}
   />
@@ -31,19 +32,21 @@ const Form = props => {
         </div>
       </div>
       <div>
-        <button
+        <Button
           style={{marginRight:'10px'}}
           type="submit"
+          color="primary"
           disabled={pristine || submitting}>
           Submit
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="submit"
+          color="secondary"
           disabled={pristine || submitting}
           onClick={reset}>
           Clear
-        </button>
+        </Button>
       </div>
     </form>
   )
